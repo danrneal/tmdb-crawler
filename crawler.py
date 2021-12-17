@@ -8,7 +8,7 @@ API_KEY = os.environ["TMDB_API_KEY"]
 NUMBER_ONES_LIST_ID = os.environ["TMDB_NUMBER_ONES_LIST_ID"]
 ON_DECK_LIST_ID = os.environ["TMDB_ON_DECK_LIST_ID"]
 WATCHED_LIST_ID = os.environ["TMDB_WATCHED_LIST_ID"]
-PROVIDERS = set()
+# PROVIDERS = set()
 
 headers = {
     "content-type": "application/json;charset=utf-8",
@@ -21,8 +21,8 @@ def main():
     watched_ids = get_movies_ids_from_list(WATCHED_LIST_ID)
     on_deck_ids = get_on_deck_movie_ids(number_one_ids, watched_ids)
     populate_list(ON_DECK_LIST_ID, on_deck_ids)
-    for provider in PROVIDERS:
-        print(provider)
+    # for provider in PROVIDERS:
+        # print(provider)
 
 
 def get_movies_ids_from_list(list_id):
@@ -75,13 +75,19 @@ def get_watch_provider(movie_id):
 
     if "flatrate" in response["results"]["US"]:
         for provider in response["results"]["US"]["flatrate"]:
-            PROVIDERS.add(provider["provider_name"])
+            # PROVIDERS.add(provider["provider_name"])
             if provider["provider_name"] in (
                 "Amazon Prime Video",
                 "Disney Plus",
+                "FXNow",  # Xfinity
+                "HBO Max",  # Xfinity
                 "Hulu",
-                "IMDB TV Amazon Channel",
                 "Netflix",
+                "Peacock Premium",  # Xfinity
+                "Showtime",  # Xfinity
+                "TBS",  # Xfinity
+                "TNT",  # Xfinity
+                "tru TV",  # Xfinity
             ):
                 return True
 
