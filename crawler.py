@@ -1,3 +1,4 @@
+import collections
 import json
 import os
 import requests
@@ -5,9 +6,8 @@ import requests
 # http://dev.travisbell.com/play/v4_auth.html
 ACCESS_TOKEN = os.environ["TMDB_ACCESS_TOKEN"]
 API_KEY = os.environ["TMDB_API_KEY"]
-NUMBER_ONES_LIST_ID = os.environ["TMDB_NUMBER_ONES_LIST_ID"]
-ON_DECK_LIST_ID = os.environ["TMDB_ON_DECK_LIST_ID"]
-WATCHED_LIST_ID = os.environ["TMDB_WATCHED_LIST_ID"]
+ACCOUNT_ID = os.environ["TMDB_ACCOUNT_ID"]
+GENRES = collections.defaultdict(list)
 # PROVIDERS = set()
 
 headers = {
@@ -17,12 +17,41 @@ headers = {
 
 
 def main():
-    number_one_ids = get_movies_ids_from_list(NUMBER_ONES_LIST_ID)
-    watched_ids = get_movies_ids_from_list(WATCHED_LIST_ID)
+    list_ids = get_list_ids(ACCOUNT_ID)
+    number_one_ids = get_movies_ids_from_list(
+        list_ids["Box Office Number One Hits"]
+    )
+    watched_ids = get_movies_ids_from_list(list_ids["Watched"])
     on_deck_ids = get_on_deck_movie_ids(number_one_ids, watched_ids)
-    populate_list(ON_DECK_LIST_ID, on_deck_ids)
+    print("Populating Lists....")
+    print(f"(1 of {len(GENRES) + 1}): Populating On Deck")
+    populate_list(list_ids["On deck"], on_deck_ids)
+    create_genre_lists(list_ids, GENRES)
+    for i, genre in enumerate(sorted(GENRES, reverse=True)):
+        print(f"({i+2} of {len(GENRES) + 1}): Populating {genre}")
+        populate_list(list_ids[genre], GENRES[genre])
     # for provider in PROVIDERS:
-        # print(provider)
+    #     print(provider)
+
+
+def get_list_ids(account_id):
+    list_ids = {}
+    page = 1
+    total_pages = 2
+    while page <= total_pages:
+        url = f"https://api.themoviedb.org/4/account/{account_id}/lists?page={page}"
+        response = requests.get(url, headers=headers).json()
+        page = response["page"] + 1
+        total_pages = response["total_pages"]
+        for result in response["results"]:
+            list_ids[result["name"]] = result["id"]
+            if result["sort_by"] != 6:
+                url = f"https://api.themoviedb.org/4/list/{result['id']}"
+                payload = {"sort_by": 6}
+                payload = json.dumps(payload)
+                requests.put(url, data=payload, headers=headers)
+
+    return list_ids
 
 
 def get_movies_ids_from_list(list_id):
@@ -40,15 +69,26 @@ def get_on_deck_movie_ids(number_one_ids, watched_ids):
     count = 0
     for movie_id in number_one_ids - watched_ids:
         count += 1
-        url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={API_KEY}"
+        url = (
+            f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={API_KEY}"
+        )
         response = requests.get(url).json()
-        print(f"({count} of {len(number_one_ids - watched_ids)}): {response['title']}")
+        print(
+            f"({count} of {len(number_one_ids - watched_ids)}): {response['title']}"
+        )
         if response["belongs_to_collection"]:
             collection_id = response["belongs_to_collection"]["id"]
             movie_id = get_movie_id_from_collection(collection_id, watched_ids)
 
-        if movie_id and movie_id not in watched_ids and get_watch_provider(movie_id):
-            movie_ids.add(movie_id)
+        if movie_id and movie_id not in watched_ids:
+            if movie_id not in movie_ids:
+                url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={API_KEY}"
+                response = requests.get(url).json()
+                for genre in response["genres"]:
+                    GENRES[genre["name"]].append(response["id"])
+
+            if get_watch_provider(movie_id):
+                movie_ids.add(movie_id)
 
     return movie_ids
 
@@ -70,7 +110,10 @@ def get_watch_provider(movie_id):
     if "US" not in response["results"]:
         return False
 
-    if "free" in response["results"]["US"] or "ads" in response["results"]["US"]:
+    if (
+        "free" in response["results"]["US"]
+        or "ads" in response["results"]["US"]
+    ):
         return True
 
     if "flatrate" in response["results"]["US"]:
@@ -109,6 +152,25 @@ def populate_list(list_id, movie_ids):
 
     payload = json.dumps(payload)
     requests.post(url, data=payload, headers=headers)
+
+
+def create_genre_lists(list_ids, genres):
+    for list_id in list_ids:
+        if list_id not in genres:
+            url = f"https://api.themoviedb.org/4/list/{list_id}"
+            requests.delete(url, headers=headers)
+
+    for genre in genres:
+        if genre not in list_ids:
+            url = f"https://api.themoviedb.org/4/list"
+            payload = {"name": genre, "iso_639_1": "en"}
+            payload = json.dumps(payload)
+            response = requests.post(url, data=payload, headers=headers).json()
+            list_ids[genre] = response["id"]
+            url = f"https://api.themoviedb.org/4/list/{response['id']}"
+            payload = {"sort_by": 6}
+            payload = json.dumps(payload)
+            requests.put(url, data=payload, headers=headers)
 
 
 if __name__ == "__main__":
