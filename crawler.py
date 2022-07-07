@@ -76,14 +76,14 @@ def get_movies_ids_from_list(list_id):
 def get_on_deck_movie_ids(number_one_ids, watched_ids):
     movie_ids = set()
     count = 0
-    for movie_id in number_one_ids - watched_ids:
+    for movie_id in number_one_ids:
         count += 1
         url = (
             f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={API_KEY}"
         )
         response = requests.get(url).json()
         print(
-            f"({count} of {len(number_one_ids - watched_ids)}): "
+            f"({count} of {len(number_one_ids)}): "
             f"{response['title']}"
         )
         if response["belongs_to_collection"]:
