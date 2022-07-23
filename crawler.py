@@ -26,7 +26,8 @@ def main():
         lists["Box Office Number One Hits"]
     )
     watched_ids = get_movie_ids_from_list(lists["Watched"])
-    movies = get_movies(number_one_ids, watched_ids)
+    marvel_ids = get_movie_ids_from_list(lists["Marvel Cinematic Universe"])
+    movies = get_movies(number_one_ids, watched_ids, marvel_ids)
     print("Populating Lists....")
     print(f"(1 of {len(movies)}): Populating On Deck")
     populate_list(lists["On Deck"], "On Deck", movies.pop("On Deck"))
@@ -78,11 +79,14 @@ def get_movie_ids_from_list(list_id):
     return movie_ids
 
 
-def get_movies(number_one_ids, watched_ids):
+def get_movies(number_one_ids, watched_ids, marvel_ids):
     movies = collections.defaultdict(set)
     genres = get_genres()
     collection_cache = set()
     for i, movie_id in enumerate(number_one_ids):
+        if args.mode != "all" and movie_id in marvel_ids:
+            continue
+
         url = (
             f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={API_KEY}"
         )
