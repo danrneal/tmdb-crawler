@@ -1,8 +1,8 @@
 import argparse
 import collections
-from datetime import datetime
 import json
 import os
+from datetime import datetime
 
 import requests
 
@@ -10,6 +10,7 @@ import requests
 ACCESS_TOKEN = os.environ["TMDB_ACCESS_TOKEN"]
 API_KEY = os.environ["TMDB_API_KEY"]
 ACCOUNT_ID = os.environ["TMDB_ACCOUNT_ID"]
+SORT_BY = 6  # primary_release_date.desc
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mode", choices=["free", "rent", "all"], default="free")
@@ -47,7 +48,7 @@ def get_lists(account_id):
         response = requests.get(url, headers=headers).json()
         for result in response["results"]:
             lists[result["name"]] = result["id"]
-            if result["sort_by"] != 6:
+            if result["sort_by"] != SORT_BY:
                 sort_list_by_release_date(result["name"], result["id"])
 
         page = response["page"]
@@ -62,7 +63,7 @@ def get_lists(account_id):
 
 def sort_list_by_release_date(list_name, list_id):
     url = f"https://api.themoviedb.org/4/list/{list_id}"
-    payload = {"sort_by": 6}
+    payload = {"sort_by": SORT_BY}
     payload = json.dumps(payload)
     response = requests.put(url, data=payload, headers=headers).json()
     if not response["success"]:
@@ -124,7 +125,7 @@ def get_movies(number_one_ids, watched_ids, marvel_ids):
 def get_genres():
     url = f"https://api.themoviedb.org/3/genre/movie/list?api_key={API_KEY}"
     response = requests.get(url).json()
-    genres = {d["id"]: d["name"] for d in response["genres"]}
+    genres = {genre["id"]: genre["name"] for genre in response["genres"]}
 
     return genres
 
@@ -136,16 +137,16 @@ def get_movies_from_collection(collection_id, watched_ids):
         f"api_key={API_KEY}"
     )
     response = requests.get(url).json()
-    parts = sorted(response["parts"], key=lambda d: d["release_date"])
-    start = False
+    parts = sorted(response["parts"], key=lambda part: part["release_date"])
+    watched = True
     for i, part in enumerate(parts):
         if part["release_date"] == "":
             continue
 
         if part["id"] not in watched_ids:
-            start = True
+            watched = False
 
-        if not start:
+        if watched:
             continue
 
         if part["release_date"] > datetime.today().strftime("%Y-%m-%d"):
