@@ -104,7 +104,9 @@ def get_movies(number_one_ids, watched_ids, marvel_ids):
             )
             for movie in collection_movies:
                 movie_id = movie["id"]
-                if args.mode == "all" or get_watch_provider(movie_id):
+                if args.mode == "all" or (
+                    get_watch_provider(movie_id) and movie_id not in marvel_ids
+                ):
                     movies["On Deck"].add(movie_id)
                     for genre_id in movie["genre_ids"]:
                         genre = genres[genre_id]
