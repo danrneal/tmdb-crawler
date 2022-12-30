@@ -20,9 +20,30 @@ pip install -U pip
 pip install -r requirements.txt
 ```
 
+Obtain a TMDB API key [here](https://www.themoviedb.org/settings/api).
+Obtain a TMDB Access token [here](http://dev.travisbell.com/play/v4_auth.html)
+Obtain your TMDB Account ID (gravatar hash) [here](http://dev.travisbell.com/play/v3_account_details.html)
+
+Set up your environment variables:
+
+```bash
+touch .env
+echo export TMDB_API_KEY="XXX" >> .env
+echo export TMDB_ACCESS_TOKEN="XXX" >> .env
+echo export TMDB_ACCOUNT_ID="XXX" >> .env
+```
+
 ## Usage
 
 Make sure you are in the virtual environment (you should see (env) before your command prompt). If not `source /env/bin/activate` to enter it.
+
+Make sure .env variables are set:
+
+```bash
+set -a; source .env; set +a
+```
+
+Then run the script:
 
 ```bash
 Usage: crawler.py
@@ -30,4 +51,4 @@ Usage: crawler.py
 
 ## License
 
-Route Planner is licensed under the [MIT license](https://github.com/danrneal/route-planner/blob/master/LICENSE).
+TMDB Crawler is licensed under the [MIT license](https://github.com/danrneal/route-planner/blob/master/LICENSE).
