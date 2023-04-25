@@ -14,6 +14,7 @@ SORT_BY = 6  # primary_release_date.desc
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mode", choices=["free", "rent", "all"], default="free")
+parser.add_argument("--filter", action="store_true")
 args = parser.parse_args()
 headers = {
     "content-type": "application/json;charset=utf-8",
@@ -30,11 +31,12 @@ def main():
     marvel_ids = get_movie_ids_from_list(lists["Marvel Cinematic Universe"])
     movies = get_movies(number_one_ids, watched_ids, marvel_ids)
     print("Populating Lists....")
-    print(f"(1 of {len(movies)}): Populating On Deck")
-    populate_list(lists["On Deck"], "On Deck", movies.pop("On Deck"))
     for i, genre in enumerate(sorted(movies, reverse=True)):
-        print(f"({i+2} of {len(movies) + 1}): Populating {genre}")
+        print(f"({i+i} of {len(movies) + 1}): Populating {genre}")
         populate_list(lists[genre], genre, movies[genre])
+
+    print(f"({len(movies)} of {len(movies)}): Populating On Deck")
+    populate_list(lists["On Deck"], "On Deck", movies.pop("On Deck"))
 
 
 def get_lists(account_id):
@@ -73,6 +75,7 @@ def sort_list_by_release_date(list_name, list_id):
 def get_movie_ids_from_list(list_id):
     url = f"https://api.themoviedb.org/4/list/{list_id}"
     response = requests.get(url, headers=headers).json()
+
     movie_ids = set(
         int(object_id.split(":")[1]) for object_id in response["object_ids"]
     )
@@ -104,22 +107,71 @@ def get_movies(number_one_ids, watched_ids, marvel_ids):
             )
             for movie in collection_movies:
                 movie_id = movie["id"]
+                movie_genres = [
+                    genres[genre_id] for genre_id in movie["genre_ids"]
+                ]
                 if args.mode == "all" or (
-                    get_watch_provider(movie_id) and movie_id not in marvel_ids
+                    get_watch_provider(movie_id)
+                    and movie_id not in marvel_ids
+                    and (
+                        args.filter
+                        and (
+                            (
+                                "Animation" not in movie_genres
+                                and "Horror" not in movie_genres
+                            )
+                            or (
+                                "Animation" in movie_genres
+                                and "Drama" in movie_genres
+                            )
+                            or (
+                                "Horror" in movie_genres
+                                and (
+                                    "Action" in movie_genres
+                                    or "Adventure" in movie_genres
+                                    or "Comedy" in movie_genres
+                                    or "Romance" in movie_genres
+                                )
+                            )
+                        )
+                    )
                 ):
                     movies["On Deck"].add(movie_id)
-                    for genre_id in movie["genre_ids"]:
-                        genre = genres[genre_id]
+                    for genre in movie_genres:
                         movies[genre].add(movie_id)
 
         else:
             movie_id = response["id"]
+            movie_genres = [genre["name"] for genre in response["genres"]]
             if movie_id not in watched_ids and (
-                args.mode == "all" or get_watch_provider(movie_id)
+                args.mode == "all"
+                or get_watch_provider(movie_id)
+                and (
+                    args.filter
+                    and (
+                        (
+                            "Animation" not in movie_genres
+                            and "Horror" not in movie_genres
+                        )
+                        or (
+                            "Animation" in movie_genres
+                            and "Drama" in movie_genres
+                        )
+                        or (
+                            "Horror" in movie_genres
+                            and (
+                                "Action" in movie_genres
+                                or "Adventure" in movie_genres
+                                or "Comedy" in movie_genres
+                                or "Romance" in movie_genres
+                            )
+                        )
+                    )
+                )
             ):
                 movies["On Deck"].add(movie_id)
-                for genre in response["genres"]:
-                    movies[genre["name"]].add(movie_id)
+                for genre in movie_genres:
+                    movies[genre].add(movie_id)
 
     return movies
 
