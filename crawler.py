@@ -31,12 +31,13 @@ def main():
     marvel_ids = get_movie_ids_from_list(lists["Marvel Cinematic Universe"])
     movies = get_movies(number_one_ids, watched_ids, marvel_ids)
     print("Populating Lists....")
+    on_deck_movie_ids = movies.pop("On Deck")
     for i, genre in enumerate(sorted(movies, reverse=True)):
         print(f"({i+1} of {len(movies) + 1}): Populating {genre}")
         populate_list(lists[genre], genre, movies[genre])
 
     print(f"({len(movies) + 1} of {len(movies) + 1}): Populating On Deck")
-    populate_list(lists["On Deck"], "On Deck", movies.pop("On Deck"))
+    populate_list(lists["On Deck"], "On Deck", on_deck_movie_ids)
 
 
 def get_lists(account_id):
