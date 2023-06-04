@@ -28,8 +28,8 @@ def main():
         lists["Box Office Number One Hits"]
     )
     watched_ids = get_movie_ids_from_list(lists["Watched"])
-    marvel_ids = get_movie_ids_from_list(lists["Marvel Cinematic Universe"])
-    movies = get_movies(number_one_ids, watched_ids, marvel_ids)
+    sequel_ids = get_movie_ids_from_list(lists["Sequels"])
+    movies = get_movies(number_one_ids, watched_ids, sequel_ids)
     print("Populating Lists....")
     on_deck_movie_ids = movies.pop("On Deck")
     for i, genre in enumerate(sorted(movies, reverse=True)):
@@ -84,12 +84,12 @@ def get_movie_ids_from_list(list_id):
     return movie_ids
 
 
-def get_movies(number_one_ids, watched_ids, marvel_ids):
+def get_movies(number_one_ids, watched_ids, sequel_ids):
     movies = collections.defaultdict(set)
     genres = get_genres()
     collection_cache = set()
     for i, movie_id in enumerate(number_one_ids):
-        if args.mode != "all" and movie_id in marvel_ids:
+        if args.mode != "all" and movie_id in sequel_ids:
             continue
 
         url = (
@@ -113,7 +113,7 @@ def get_movies(number_one_ids, watched_ids, marvel_ids):
                 ]
                 if args.mode == "all" or (
                     get_watch_provider(movie_id)
-                    and movie_id not in marvel_ids
+                    and movie_id not in sequel_ids
                     and (
                         not args.filter
                         or (
