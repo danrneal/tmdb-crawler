@@ -74,12 +74,17 @@ def sort_list_by_release_date(list_name, list_id):
 
 
 def get_movie_ids_from_list(list_id):
-    url = f"https://api.themoviedb.org/4/list/{list_id}"
-    response = requests.get(url, headers=headers).json()
+    movie_ids = set()
+    page = 1
+    total_pages = 1
+    while page <= total_pages:
+        url = f"https://api.themoviedb.org/4/list/{list_id}?page={page}"
+        response = requests.get(url, headers=headers).json()
+        for result in response["results"]:
+            movie_ids.add(result["id"])
 
-    movie_ids = set(
-        int(object_id.split(":")[1]) for object_id in response["object_ids"]
-    )
+        page = response["page"] + 1
+        total_pages = response["total_pages"]
 
     return movie_ids
 
