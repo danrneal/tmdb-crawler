@@ -24,6 +24,7 @@ headers = {
 
 def main():
     lists = get_lists(ACCOUNT_ID)
+    print("Getting IDs from lists...")
     number_one_ids = get_movie_ids_from_list(
         lists["Box Office Number One Hits"]
     )
@@ -80,6 +81,8 @@ def get_movie_ids_from_list(list_id):
     while page <= total_pages:
         url = f"https://api.themoviedb.org/4/list/{list_id}?page={page}"
         response = requests.get(url, headers=headers).json()
+        print(f"{response['name']}: Page {page} of {response['total_pages']}")
+
         for result in response["results"]:
             movie_ids.add(result["id"])
 
@@ -101,7 +104,7 @@ def get_movies(number_one_ids, watched_ids, sequel_ids):
             f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={API_KEY}"
         )
         response = requests.get(url).json()
-        print(f"({i+1} of {len(number_one_ids)}): " f"{response['title']}")
+        print(f"({i+1} of {len(number_one_ids)}): {response['title']}")
         if response["belongs_to_collection"]:
             collection_id = response["belongs_to_collection"]["id"]
             if collection_id in collection_cache:
