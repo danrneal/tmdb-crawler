@@ -2,6 +2,7 @@ import argparse
 import collections
 import json
 import os
+import time
 from datetime import datetime
 
 import requests
@@ -36,6 +37,7 @@ def main():
     for i, genre in enumerate(sorted(movies, reverse=True)):
         print(f"({i+1} of {len(movies) + 1}): Populating {genre}")
         populate_list(lists[genre], genre, movies[genre])
+        time.sleep(60)
 
     print(f"({len(movies) + 1} of {len(movies) + 1}): Populating On Deck")
     populate_list(lists["On Deck"], "On Deck", on_deck_movie_ids)
@@ -195,7 +197,8 @@ def get_movies_from_collection(collection_id, watched_ids):
         f"api_key={API_KEY}"
     )
     response = requests.get(url).json()
-    parts = sorted(response["parts"], key=lambda part: part["release_date"])
+    parts = filter(lambda p: p["media_type"] == "movie", response["parts"])
+    parts = sorted(parts, key=lambda part: part["release_date"])
     watched = True
     for i, part in enumerate(parts):
         if part["release_date"] == "":
