@@ -12,6 +12,7 @@ ACCESS_TOKEN = os.environ["TMDB_ACCESS_TOKEN"]
 API_KEY = os.environ["TMDB_API_KEY"]
 ACCOUNT_ID = os.environ["TMDB_ACCOUNT_ID"]
 SORT_BY = 6  # primary_release_date.desc
+#PROVIDERS = set()
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mode", choices=["free", "rent", "all"], default="free")
@@ -41,6 +42,8 @@ def main():
 
     print(f"({len(movies) + 1} of {len(movies) + 1}): Populating On Deck")
     populate_list(lists["On Deck"], "On Deck", on_deck_movie_ids)
+    #for provider in sorted(PROVIDERS):
+        #print(provider)
 
 
 def get_lists(account_id):
@@ -239,19 +242,25 @@ def get_watch_provider(movie_id):
 
     if "flatrate" in response["results"]["US"]:
         for provider in response["results"]["US"]["flatrate"]:
+            #PROVIDERS.add(provider["provider_name"])
             if provider["provider_name"] in (
+                "AMC",  # Xfinity
                 "Amazon Prime Video",
                 "Apple TV Plus",
                 "Disney Plus",
                 "FXNow",  # Xfinity
+                "Freeform",  # Xfinity
+                "Hoopla",
                 "Hulu",
                 "Max",  # Xfinity
                 "Netflix",
                 "Peacock",
                 "Showtime",  # Xfinity
+                "Starz",  # Xfinity
                 "TBS",  # Xfinity
                 "TNT",  # Xfinity
                 "tru TV",  # Xfinity
+                "USA Network",  # Xfinity
             ):
                 return True
 
