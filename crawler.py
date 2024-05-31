@@ -239,15 +239,15 @@ def get_watch_provider(movie_id):
 
     if "flatrate" in response["results"]["US"]:
         for provider in response["results"]["US"]["flatrate"]:
-            # PROVIDERS.add(provider["provider_name"])
             if provider["provider_name"] in (
                 "Amazon Prime Video",
+                "Apple TV Plus",
                 "Disney Plus",
                 "FXNow",  # Xfinity
-                "HBO Max",  # Xfinity
                 "Hulu",
+                "Max",  # Xfinity
                 "Netflix",
-                "Peacock Premium",  # Xfinity
+                "Peacock",
                 "Showtime",  # Xfinity
                 "TBS",  # Xfinity
                 "TNT",  # Xfinity
